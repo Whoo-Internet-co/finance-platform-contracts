@@ -1,0 +1,64 @@
+{
+  "name": "@whoo-internet-co/finance-platform-contracts",
+  "version": "1.0.0",
+  "description": "Source of truth dos contratos públicos (eventos e APIs) da plataforma financeira. Distribui apenas artefatos de contrato: JSON Schema, OpenAPI, exemplos e metadados de validação.",
+  "license": "MIT",
+  "type": "module",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Whoo-Internet-co/finance-platform-contracts.git"
+  },
+  "homepage": "https://github.com/Whoo-Internet-co/finance-platform-contracts",
+  "publishConfig": {
+    "registry": "https://npm.pkg.github.com",
+    "access": "restricted"
+  },
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    },
+    "./events/transacao-autorizada/v1/schema": "./events/transacao-autorizada/v1/schema.json",
+    "./events/transacao-autorizada/v1/example": "./events/transacao-autorizada/v1/example.json",
+    "./openapi/authorization/v1": "./openapi/authorization/v1/openapi.yaml",
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "dist",
+    "events",
+    "!events/**/invalid-examples",
+    "openapi",
+    "docs",
+    "README.md",
+    "LICENSE"
+  ],
+  "scripts": {
+    "generate:types": "node scripts/generate-types.mjs",
+    "build": "npm run generate:types && tsc -p tsconfig.json",
+    "test": "vitest run",
+    "validate": "tsx scripts/validate-contracts.ts",
+    "lint": "eslint .",
+    "prepack": "npm run build"
+  },
+  "devDependencies": {
+    "@apidevtools/swagger-parser": "^12.0.0",
+    "@eslint/js": "^9.18.0",
+    "@types/js-yaml": "^4.0.9",
+    "@types/node": "^22.10.0",
+    "ajv": "^8.17.1",
+    "ajv-formats": "^3.0.1",
+    "eslint": "^9.18.0",
+    "globals": "^17.12.0",
+    "json-schema-to-typescript": "^15.0.4",
+    "tsx": "^4.19.2",
+    "typescript": "^5.7.0",
+    "typescript-eslint": "^8.20.0",
+    "vitest": "^3.0.0"
+  },
+  "dependencies": {
+    "js-yaml": "^4.1.0"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}

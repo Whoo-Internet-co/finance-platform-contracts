@@ -1,0 +1,10 @@
+# Governança de contratos.
+#
+# NOTA: o time `architecture-team` ainda não existe na organização.
+# Enquanto isso, os contratos são atribuídos ao time `owners`.
+# Quando o time de arquitetura for criado, substituir abaixo por:
+#   /events/  @Whoo-Internet-co/architecture-team
+#   /openapi/ @Whoo-Internet-co/architecture-team
+
+/events/  @Whoo-Internet-co/owners
+/openapi/ @Whoo-Internet-co/owners

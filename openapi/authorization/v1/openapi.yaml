@@ -1,0 +1,287 @@
+openapi: 3.1.0
+info:
+  title: Authorization Service API
+  version: 1.0.0
+  description: |
+    Contrato público do Authorization Service (contract-first).
+
+    Este repositório contém **apenas o contrato** — a implementação vive no serviço.
+    Source of truth: `finance-platform-contracts`.
+
+    ## Idempotência
+
+    Todas as requisições de criação de autorização devem enviar o header
+    `Idempotency-Key`. Requisições repetidas com a mesma chave retornam
+    o resultado original (`200`) sem reprocessar a operação.
+
+    ## Erros
+
+    Erros seguem **RFC 7807 (Problem Details)**, com media type
+    `application/problem+json`.
+  contact:
+    name: Plataforma Financeira — Governança de Contratos
+    url: https://github.com/Whoo-Internet-co/finance-platform-contracts
+  license:
+    name: MIT
+    url: https://opensource.org/licenses/MIT
+servers:
+  - url: https://api.whoo-internet.co/authorization
+    description: Produção
+tags:
+  - name: autorizacoes
+    description: Autorização de transações em contratos
+paths:
+  /v1/contratos/{id_contrato}/autorizacoes:
+    post:
+      operationId: criarAutorizacao
+      summary: Autoriza uma transação em um contrato
+      description: |
+        Cria uma autorização de transação para o contrato informado.
+        Operação idempotente via header `Idempotency-Key`:
+
+        - `201`: autorização aprovada (primeira execução da chave);
+        - `200`: a mesma `Idempotency-Key` já foi processada — retorna o
+          resultado original, sem efeitos adicionais.
+
+        Em caso de aprovação, o serviço publica o evento
+        `TransacaoAutorizada` (ver `events/transacao-autorizada/v1`).
+      tags:
+        - autorizacoes
+      parameters:
+        - name: id_contrato
+          in: path
+          required: true
+          description: Identificador do contrato
+          schema:
+            type: string
+            minLength: 1
+          example: CTR-001
+        - name: Idempotency-Key
+          in: header
+          required: true
+          description: |
+            Chave de idempotência da requisição. Recomenda-se UUID.
+            Requisições com a mesma chave retornam o resultado original.
+          schema:
+            type: string
+            minLength: 1
+            maxLength: 255
+          example: 550e8400-e29b-41d4-a716-446655440000
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CriarAutorizacaoRequest'
+            examples:
+              debito:
+                summary: Débito simples
+                value:
+                  id_conta: ACC-001
+                  valor: 100.00
+                  moeda: BRL
+                  tipo_operacao: DEBITO
+                  id_estabelecimento: EST-123
+                  metadata:
+                    canal: app
+      responses:
+        '201':
+          description: Autorização aprovada
+          headers:
+            Location:
+              description: URI da autorização criada
+              schema:
+                type: string
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AutorizacaoResponse'
+              example:
+                id_autorizacao: AUT-001
+                id_contrato: CTR-001
+                status: APROVADA
+                valor: 100.00
+                saldo_reservado: 900.00
+                occurred_at: '2026-09-23T20:00:00Z'
+        '200':
+          description: Requisição idempotente — retorna o resultado original sem reprocessar
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AutorizacaoResponse'
+              example:
+                id_autorizacao: AUT-001
+                id_contrato: CTR-001
+                status: APROVADA
+                valor: 100.00
+                saldo_reservado: 900.00
+                occurred_at: '2026-09-23T20:00:00Z'
+        '402':
+          description: Limite insuficiente
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+              example:
+                type: https://api.whoo-internet.co/problems/limite-insuficiente
+                title: Limite insuficiente
+                status: 402
+                detail: O contrato não possui limite disponível para o valor solicitado.
+                instance: /v1/contratos/CTR-001/autorizacoes
+        '409':
+          description: Conflito de estado ou concorrência
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+              example:
+                type: https://api.whoo-internet.co/problems/conflito-estado
+                title: Conflito de estado
+                status: 409
+                detail: O contrato está em um estado que não permite autorização, ou houve conflito de concorrência.
+                instance: /v1/contratos/CTR-001/autorizacoes
+        '422':
+          description: Erro de validação ou regra de domínio
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+              example:
+                type: https://api.whoo-internet.co/problems/validacao
+                title: Requisição inválida
+                status: 422
+                detail: O campo 'valor' deve ser estritamente positivo.
+                instance: /v1/contratos/CTR-001/autorizacoes
+        '429':
+          description: Throttling — limite de requisições excedido
+          headers:
+            Retry-After:
+              description: Segundos até nova tentativa ser aceita
+              schema:
+                type: integer
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+              example:
+                type: https://api.whoo-internet.co/problems/throttling
+                title: Limite de requisições excedido
+                status: 429
+                detail: Reduza a taxa de requisições e tente novamente.
+                instance: /v1/contratos/CTR-001/autorizacoes
+        '503':
+          description: Indisponibilidade ou degradação do serviço
+          headers:
+            Retry-After:
+              description: Segundos até nova tentativa ser aceita
+              schema:
+                type: integer
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+              example:
+                type: https://api.whoo-internet.co/problems/indisponivel
+                title: Serviço indisponível
+                status: 503
+                detail: O serviço está temporariamente indisponível ou degradado. Tente novamente.
+                instance: /v1/contratos/CTR-001/autorizacoes
+components:
+  schemas:
+    CriarAutorizacaoRequest:
+      type: object
+      additionalProperties: false
+      required:
+        - id_conta
+        - valor
+        - moeda
+        - tipo_operacao
+      properties:
+        id_conta:
+          type: string
+          minLength: 1
+          description: Identificador da conta de origem/destino da operação
+        valor:
+          type: number
+          exclusiveMinimum: 0
+          description: Valor da operação (decimal positivo)
+          example: 100.00
+        moeda:
+          type: string
+          minLength: 3
+          maxLength: 3
+          description: Código da moeda (ISO 4217)
+          example: BRL
+        tipo_operacao:
+          type: string
+          enum:
+            - DEBITO
+            - CREDITO
+            - RESERVA
+            - ESTORNO
+          description: Tipo da operação a autorizar
+        id_estabelecimento:
+          type: string
+          description: Identificador do estabelecimento (opcional)
+        metadata:
+          type: object
+          description: Metadados livres da requisição (opcional)
+          additionalProperties: true
+    AutorizacaoResponse:
+      type: object
+      additionalProperties: true
+      required:
+        - id_autorizacao
+        - id_contrato
+        - status
+        - valor
+        - saldo_reservado
+        - occurred_at
+      properties:
+        id_autorizacao:
+          type: string
+          description: Identificador da autorização
+        id_contrato:
+          type: string
+          description: Identificador do contrato
+        status:
+          type: string
+          enum:
+            - APROVADA
+            - RECUSADA
+          description: Resultado da autorização
+        valor:
+          type: number
+          description: Valor autorizado
+        saldo_reservado:
+          type: number
+          description: Saldo reservado após a autorização
+        occurred_at:
+          type: string
+          format: date-time
+          description: Instante da autorização (UTC)
+    ProblemDetails:
+      type: object
+      additionalProperties: true
+      required:
+        - type
+        - title
+        - status
+      description: RFC 7807 — Problem Details for HTTP APIs
+      properties:
+        type:
+          type: string
+          format: uri
+          description: URI que identifica o tipo do problema
+        title:
+          type: string
+          description: Resumo curto e legível do tipo de problema
+        status:
+          type: integer
+          description: Código de status HTTP
+        detail:
+          type: string
+          description: Explicação específica desta ocorrência
+        instance:
+          type: string
+          description: URI que identifica esta ocorrência específica

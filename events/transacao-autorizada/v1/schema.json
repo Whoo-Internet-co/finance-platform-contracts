@@ -1,0 +1,70 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://contracts.whoo-internet.co/events/transacao-autorizada/v1/schema.json",
+  "title": "TransacaoAutorizada",
+  "description": "Evento publicado pelo Authorization Service quando uma transação é autorizada. Contrato público da plataforma — source of truth: finance-platform-contracts.",
+  "type": "object",
+  "additionalProperties": true,
+  "required": [
+    "event_id",
+    "event_type",
+    "event_version",
+    "occurred_at",
+    "id_autorizacao",
+    "id_contrato",
+    "valor",
+    "saldo_reservado",
+    "correlation_id"
+  ],
+  "properties": {
+    "event_id": {
+      "type": "string",
+      "format": "uuid",
+      "description": "Identificador único do evento. Base para idempotência nos consumidores (entrega at-least-once)."
+    },
+    "event_type": {
+      "type": "string",
+      "const": "TransacaoAutorizada",
+      "description": "Tipo do evento. Valor constante."
+    },
+    "event_version": {
+      "type": "string",
+      "pattern": "^1\\.\\d+$",
+      "description": "Versão do contrato (MAJOR.MINOR). Alterações MINOR são retrocompatíveis; mudança de MAJOR exige nova pasta de versão (v2)."
+    },
+    "occurred_at": {
+      "type": "string",
+      "format": "date-time",
+      "pattern": "Z$",
+      "description": "Instante em que a autorização ocorreu, ISO-8601 / RFC 3339 em UTC (sufixo Z obrigatório)."
+    },
+    "id_autorizacao": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Identificador da autorização gerado pelo Authorization Service."
+    },
+    "id_contrato": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Identificador do contrato ao qual a transação pertence."
+    },
+    "valor": {
+      "type": "number",
+      "exclusiveMinimum": 0,
+      "description": "Valor da transação autorizada. Deve ser estritamente positivo."
+    },
+    "saldo_reservado": {
+      "type": "number",
+      "description": "Saldo reservado no contrato após a autorização."
+    },
+    "correlation_id": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Identificador de correlação para rastreamento ponta a ponta."
+    },
+    "trace_id": {
+      "type": ["string", "null"],
+      "description": "Identificador de trace distribuído (opcional). Pode ser null quando tracing não estiver ativo."
+    }
+  }
+}
