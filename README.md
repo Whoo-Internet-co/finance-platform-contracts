@@ -304,17 +304,24 @@ intencional e temporária → v2 com envelope puro):
 - Convergência para CloudEvents **não implementada** (apenas documentada);
 - Sincronização com AWS Schema Registry **não implementada**;
 - O time `architecture-team` ainda não existe — CODEOWNERS aponta para
-  `@Whoo-Internet-co/owners` até que seja criado.
+  `@Whoo-Internet-co/owners` até que seja criado;
+- Branch protection/rulesets **não configurados** (plano GitHub atual não
+  permite em repo privado — ver Governança).
 
 ## Governança e segurança
 
 - **Nenhuma credencial** é versionada neste repositório.
 - **CODEOWNERS**: `/events/` e `/openapi/` → `@Whoo-Internet-co/owners`
   (substituir por `@Whoo-Internet-co/architecture-team` quando o time existir).
-- **Branch protection** (recomendado/configurado na `main`):
+- **Branch protection** (recomendado na `main`):
   - PR obrigatório antes de merge;
   - check `validate` (workflow `validate.yml`) obrigatório;
   - revisão arquitetural obrigatória para mudanças em contratos (CODEOWNERS).
+
+  > **Pendência:** a proteção de branch/rulesets exige plano GitHub pago para
+  > repositórios privados (ou tornar o repo público). Não foi possível
+  > configurar via API no plano atual — as recomendações acima devem ser
+  > aplicadas manualmente em *Settings → Branches* quando o plano permitir.
 
 ## Licença
 
