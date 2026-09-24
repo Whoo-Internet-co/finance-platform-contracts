@@ -1,6 +1,6 @@
 {
   "name": "@whoo-internet-co/finance-platform-contracts",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Source of truth dos contratos públicos (eventos e APIs) da plataforma financeira. Distribui apenas artefatos de contrato: JSON Schema, OpenAPI, exemplos e metadados de validação.",
   "license": "MIT",
   "type": "module",

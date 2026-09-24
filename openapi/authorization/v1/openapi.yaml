@@ -104,7 +104,23 @@ paths:
                 saldo_reservado: 900.00
                 occurred_at: '2026-09-23T20:00:00Z'
         '200':
-          description: Requisição idempotente — retorna o resultado original sem reprocessar
+          description: |
+            Requisição idempotente — o resultado original já havia sido
+            processado para esta `Idempotency-Key` e é retornado sem efeitos
+            adicionais. O header `Idempotency-Key` é ecoado na resposta para
+            correlação.
+          headers:
+            Idempotency-Key:
+              description: |
+                Chave de idempotência da requisição original, ecoada na
+                resposta para que o cliente confirme que o resultado em cache
+                corresponde à sua chave. Comparável com a chave enviada na
+                requisição.
+              schema:
+                type: string
+                minLength: 1
+                maxLength: 255
+              example: 550e8400-e29b-41d4-a716-446655440000
           content:
             application/json:
               schema:
@@ -117,48 +133,95 @@ paths:
                 saldo_reservado: 900.00
                 occurred_at: '2026-09-23T20:00:00Z'
         '402':
-          description: Limite insuficiente
+          description: |
+            Limite insuficiente — falha de regra de domínio. Corpo em
+            `application/problem+json` (RFC 7807).
           content:
             application/problem+json:
               schema:
                 $ref: '#/components/schemas/ProblemDetails'
-              example:
-                type: https://api.whoo-internet.co/problems/limite-insuficiente
-                title: Limite insuficiente
-                status: 402
-                detail: O contrato não possui limite disponível para o valor solicitado.
-                instance: /v1/contratos/CTR-001/autorizacoes
+              examples:
+                limite_insuficiente:
+                  summary: Contrato sem limite disponível para o valor solicitado
+                  value:
+                    type: https://api.whoo-internet.co/problems/limite-insuficiente
+                    title: Limite insuficiente
+                    status: 402
+                    detail: O contrato não possui limite disponível para o valor solicitado.
+                    instance: /v1/contratos/CTR-001/autorizacoes
+                reserva_excede_saldo:
+                  summary: Reserva ultrapassaria o saldo disponível
+                  value:
+                    type: https://api.whoo-internet.co/problems/limite-insuficiente
+                    title: Limite insuficiente
+                    status: 402
+                    detail: A reserva ultrapassaria o saldo disponível do contrato.
+                    instance: /v1/contratos/CTR-001/autorizacoes
         '409':
-          description: Conflito de estado ou concorrência
+          description: |
+            Conflito de estado ou concorrência. Corpo em
+            `application/problem+json` (RFC 7807).
           content:
             application/problem+json:
               schema:
                 $ref: '#/components/schemas/ProblemDetails'
-              example:
-                type: https://api.whoo-internet.co/problems/conflito-estado
-                title: Conflito de estado
-                status: 409
-                detail: O contrato está em um estado que não permite autorização, ou houve conflito de concorrência.
-                instance: /v1/contratos/CTR-001/autorizacoes
+              examples:
+                estado_incompativel:
+                  summary: Contrato em estado que não permite autorização
+                  value:
+                    type: https://api.whoo-internet.co/problems/conflito-estado
+                    title: Conflito de estado
+                    status: 409
+                    detail: O contrato está em um estado que não permite autorização, ou houve conflito de concorrência.
+                    instance: /v1/contratos/CTR-001/autorizacoes
+                concorrencia:
+                  summary: Conflito de concorrência na mesma chave de idempotência
+                  value:
+                    type: https://api.whoo-internet.co/problems/conflito-estado
+                    title: Conflito de concorrência
+                    status: 409
+                    detail: A operação conflitou com outra requisição em andamento para o mesmo contrato. Reenvie a requisição.
+                    instance: /v1/contratos/CTR-001/autorizacoes
         '422':
-          description: Erro de validação ou regra de domínio
+          description: |
+            Erro de validação ou regra de domínio. Corpo em
+            `application/problem+json` (RFC 7807); o campo `errors`
+            (extensão) detalha violações por campo.
           content:
             application/problem+json:
               schema:
                 $ref: '#/components/schemas/ProblemDetails'
-              example:
-                type: https://api.whoo-internet.co/problems/validacao
-                title: Requisição inválida
-                status: 422
-                detail: O campo 'valor' deve ser estritamente positivo.
-                instance: /v1/contratos/CTR-001/autorizacoes
+              examples:
+                validacao_campo:
+                  summary: Requisição com campo inválido
+                  value:
+                    type: https://api.whoo-internet.co/problems/validacao
+                    title: Requisição inválida
+                    status: 422
+                    detail: O campo 'valor' deve ser estritamente positivo.
+                    instance: /v1/contratos/CTR-001/autorizacoes
+                    errors:
+                      - campo: valor
+                        motivo: deve ser estritamente positivo
+                regra_dominio:
+                  summary: Violação de regra de negócio
+                  value:
+                    type: https://api.whoo-internet.co/problems/regra-dominio
+                    title: Regra de domínio violada
+                    status: 422
+                    detail: A operação DEBITO não é permitida para contratos no modo somente-leitura.
+                    instance: /v1/contratos/CTR-001/autorizacoes
         '429':
-          description: Throttling — limite de requisições excedido
+          description: |
+            Throttling — limite de requisições excedido. Corpo em
+            `application/problem+json` (RFC 7807); header `Retry-After`
+            indica quando tentar novamente.
           headers:
             Retry-After:
               description: Segundos até nova tentativa ser aceita
               schema:
                 type: integer
+              example: 30
           content:
             application/problem+json:
               schema:
@@ -170,12 +233,16 @@ paths:
                 detail: Reduza a taxa de requisições e tente novamente.
                 instance: /v1/contratos/CTR-001/autorizacoes
         '503':
-          description: Indisponibilidade ou degradação do serviço
+          description: |
+            Indisponibilidade ou degradação do serviço. Corpo em
+            `application/problem+json` (RFC 7807); header `Retry-After`
+            indica quando tentar novamente.
           headers:
             Retry-After:
               description: Segundos até nova tentativa ser aceita
               schema:
                 type: integer
+              example: 60
           content:
             application/problem+json:
               schema:

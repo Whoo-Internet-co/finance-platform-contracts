@@ -294,9 +294,12 @@ payload *flat* que já carrega metadados equivalentes (`event_id` ↔ `id`,
 `event_type` ↔ `type`, `occurred_at` ↔ `time`, etc.) — decisão para preservar
 compatibilidade, sem breaking change silencioso.
 
-Mapeamento completo e plano de convergência (transição com duplicação
-intencional e temporária → v2 com envelope puro):
-[events/transacao-autorizada/v1/README.md](events/transacao-autorizada/v1/README.md#relação-com-cloudevents).
+- Mapeamento do evento para os atributos CloudEvents 1.0 e a distinção
+  **envelope técnico × payload de negócio** (conforme ADR-008):
+  [docs/cloudevents-mapping.md](docs/cloudevents-mapping.md).
+- Mapeamento completo e plano de convergência (transição com duplicação
+  intencional e temporária → v2 com envelope puro):
+  [events/transacao-autorizada/v1/README.md](events/transacao-autorizada/v1/README.md#relação-com-cloudevents).
 
 ## 18. Limitações atuais
 
