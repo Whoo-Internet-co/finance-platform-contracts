@@ -86,6 +86,8 @@ finance-platform-contracts/
 │   ├── validate-contracts.ts            # npm run validate
 │   └── generate-types.mjs               # geração de tipos derivados
 ├── docs/
+│   ├── adr/
+│   │   └── ADR-001-centralized-contract-registry.md  # decisão de arquitetura
 │   └── versioning.md                    # política SemVer
 ├── .github/
 │   ├── workflows/validate.yml           # CI: lint, test, validate, build
@@ -184,7 +186,8 @@ npm run build     # gera tipos derivados + compila (tsc)
 
 ## 10. Versionamento
 
-SemVer estrito — política completa em [docs/versioning.md](docs/versioning.md):
+SemVer estrito — política completa em [docs/versioning.md](docs/versioning.md)
+e decisão arquitetural em [docs/adr/ADR-001-centralized-contract-registry.md](docs/adr/ADR-001-centralized-contract-registry.md):
 
 - **PATCH**: documentação, correções sem alterar contrato observável;
 - **MINOR**: mudanças backward-compatible (novos campos opcionais, novos
